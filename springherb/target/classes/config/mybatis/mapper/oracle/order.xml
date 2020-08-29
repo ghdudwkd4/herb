@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="config.mybatis.mapper.oracle.order">
+	<insert id="insertOrder" parameterType="orderVo">
+		<selectKey keyProperty="orderNo" resultType="int" order="BEFORE">
+			select orders_Seq.nextval from dual
+		</selectKey>
+		insert into orders(orderno, customerid, totalprice,
+	    	message, customername, hp, zipcode, address, addressDetail)
+		values(#{orderNo}, #{customerId}, #{totalPrice},
+	    	#{message}, #{customerName}, #{hp}, #{zipcode}, 
+	    	#{address}, #{addressDetail})
+	</insert>
+	
+	<update id="insertOrderDetails" parameterType="orderVo">
+		insert into orderdetails(orderno, productno, quantity)
+		select #{orderNo}, productno, quantity from cart
+		where customerid=#{customerId}
+	</update>
+	
+	<select id="selectOrderDetailsView" parameterType="int" 
+		resultType="map">
+		select * from orderDetailsView
+		where orderNo=#{orderNo}
+	</select>
+	
+	<select id="selectOrdersView" parameterType="int" 
+		resultType="map">
+		select * from ordersView
+		where orderNo=#{orderNo}
+	</select>
+	
+	<resultMap type="OrderAllVO" id="orderListResultMap">
+		<association property="orderVo" javaType="OrderVO" 
+			column="orderNo">
+			<id column="orderNo" property="orderNo" jdbcType="BIGINT"/>
+			<result column="customerId" property="customerId" 
+				jdbcType="VARCHAR"/>
+			<result column="totalPrice" property="totalPrice" 
+				jdbcType="BIGINT"/>
+			<result column="deliveryStatus" property="deliveryStatus" 
+				jdbcType="VARCHAR"/>
+			<result column="orderDate" property="orderDate" 
+				jdbcType="TIMESTAMP"/>
+			<result column="deliveryDate" property="deliveryDate" 
+				jdbcType="TIMESTAMP"/>
+			<result column="paymentEndDate" property="paymentEndDate" 
+				jdbcType="TIMESTAMP"/>
+			<result column="message" property="message" 
+				jdbcType="VARCHAR"/>
+			<result column="customerName" property="customerName" 
+				jdbcType="VARCHAR"/>
+			<result column="hp" property="hp" 
+				jdbcType="VARCHAR"/>
+			<result column="zipcode" property="zipcode" 
+				jdbcType="VARCHAR"/>
+			<result column="address" property="address" 
+				jdbcType="VARCHAR"/>
+			<result column="addressDetail" property="addressDetail" 
+				jdbcType="VARCHAR"/>
+		</association>
+		<collection property="orderDetailsList" column="orderNo"
+			javaType="ArrayList" 
+			ofType="map" select="selectOrderDetailsView">		
+		</collection>
+	</resultMap>
+	
+	<select id="selectOrderList" parameterType="DateSearchVo" 
+		resultMap="orderListResultMap">
+		select *
+		from
+		(
+		    select rownum as RNUM, A.*
+		    from(
+		        select * from orders
+				<where> 
+					<if test="customerId!=null and customerId!=''">
+						customerid=#{customerId}
+					</if>				
+					and orderdate>=#{startDay}
+					<![CDATA[
+					and orderdate < to_date(#{endDay})+1 ]]>
+				</where>
+				order by orderNo desc
+		    )A    
+		)
+		<![CDATA[ 
+		where RNUM>#{firstRecordIndex}
+		  and RNUM<=#{firstRecordIndex }+ #{recordCountPerPage}]]>		
+	</select>
+	
+	<select id="selectTotalRecord" parameterType="dateSearchVo" 
+		resultType="int">
+		select count(*) from orders
+		<where> 
+			<if test="customerId!=null and customerId!=''">
+				customerid=#{customerId}
+			</if>				
+			and orderdate>=#{startDay}
+			<![CDATA[
+			and orderdate < to_date(#{endDay})+1 ]]>
+		</where>
+	</select>
+	
+	<select id="selectBest" parameterType="int" resultType="map">
+		select A.*
+			from
+			(
+			    select p.PRODUCTNAME, o.productno, sum(quantity) as totalQty
+			    from orderDetails o join products p
+			    on o.productno = p.productno
+			    where p.categoryno = (select categoryno from products
+			                        where productNo = #{productNo})
+			    group by o.productno,p.PRODUCTNAME
+			    order by totalQty desc
+			)A
+			<![CDATA[ where rownum < 6 ]]>
+	</select>
+</mapper>
+
+
+
+
+
+
+
+
+

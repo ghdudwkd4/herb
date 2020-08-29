@@ -1,0 +1,27 @@
+1조
+http://192.168.11.3:9090/invem/index.gg
+
+id = admin
+pwd = 123
+
+
+2조
+http://192.168.11.20:9090/team2SemiPro/project/Reviews.do
+
+http://192.168.11.20:9090/team2SemiPro/project/adminMain.jsp
+
+
+3조
+http://192.168.11.14:9090/squarebox/movie/Home.jsp
+
+4조
+http://192.168.11.23:9090/semiproject/index.do
+
+5조
+http://192.168.11.27:9090/musicStreaming/mainPage/musicVideo.jsp
+
+-------------
+
+
+
+
